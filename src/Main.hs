@@ -313,7 +313,7 @@ benchmarkDijkstra' fname = do
   graph <- readGraph fname
   let nVertices = length graph
       nEdges = length $ concat (V.toList graph)
-      meanDeg = (fromIntegral nVertices / fromIntegral nEdges) :: Double
+      meanDeg = (fromIntegral nEdges / fromIntegral nVertices) :: Double
       outfile = fname ++ ".outer_parallel.results"
   writeFile outfile "nThreads,time\n"
   maxThreads <- getNumCapabilities

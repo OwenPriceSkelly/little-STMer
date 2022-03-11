@@ -1,6 +1,7 @@
 * dijkstra
 ** Building/Running
-#+BEGIN_SRC bash
+#+BEGIN_SRC bash :noeval
 stack install --ghc-options="-O2 -threaded -feager-blackholing -rtsopts"
-little-STMer +RTS -s -A32M -N -T
-#+end_src bash
+little-STMer [filename.graph] [0|1] +RTS -s -A32M -N -T
+#+end_src
+second arg is 0 if benchmarking "inner parallel" version, second arg is 1 if benchmarking "outer parallel" version (relaxes edges in batch directly from queue instead of inner, which is per-node)
