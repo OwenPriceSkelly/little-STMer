@@ -5,12 +5,19 @@
 
 packages:
 - completed:
-    hackage: repa-3.4.1.4@sha256:df02acc0f65be7ff67cf71058841644425337c5ebd44c95b1ac1564a1e3c4858,3323
+    hackage: pqueue-1.4.1.4@sha256:6c8ca63f67241a3b57ed063c9f72d70dbbb6a1115d735e49481bfaecd241b661,1867
     pantry-tree:
-      size: 2965
-      sha256: 2addb474c6f496d26c4335ca4c6a333c746d7f90957d13182c13a1483c6db7e7
+      size: 886
+      sha256: 279e6c8c50be080b8eed7925036d4c247e176b9c26966554573d4cd69e24d8ce
   original:
-    hackage: repa-3.4.1.4@sha256:df02acc0f65be7ff67cf71058841644425337c5ebd44c95b1ac1564a1e3c4858,3323
+    hackage: pqueue-1.4.1.4
+- completed:
+    hackage: random-1.2.1@sha256:8bee24dc0c985a90ee78d94c61f8aed21c49633686f0f1c14c5078d818ee43a2,6598
+    pantry-tree:
+      size: 1528
+      sha256: 8bdc994ce41f43624ab42302a881fe5a0f81d965f5d238841e24943664681a06
+  original:
+    hackage: random-1.2.1
 snapshots:
 - completed:
     size: 587821
