@@ -299,8 +299,8 @@ benchmarkDijkstra fname = do
   maxThreads <- getNumCapabilities
   forM_ [1 .. maxThreads] $ \nThreads -> do
     setNumCapabilities nThreads
-    printf "NTHREADS: %8d \n" nThreads
-    printf "GRAPH: |V|:%d, |E|:%d, mean degree:%4.4f\n" nVertices nEdges meanDeg
+    -- printf "NTHREADS: %8d \n" nThreads
+    -- printf "GRAPH: |V|:%d, |E|:%d, mean degree:%4.4f\n" nVertices nEdges meanDeg
     -- time 5 runs across the first few non-dead-end vertices
     forM_ (take 5 [src | src <- [0 .. nVertices - 1], not (null $ graph ! src)]) $ \src -> do
       t0 <- elapsed_ns <$> getRTSStats
