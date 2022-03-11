@@ -2,5 +2,5 @@
 ** Building/Running
 #+BEGIN_SRC bash
 stack install --ghc-options="-O2 -threaded -feager-blackholing -rtsopts"
-dijkstra +RTS -s -A32M -N -T
+little-STMer +RTS -s -A32M -N -T
 #+end_src bash

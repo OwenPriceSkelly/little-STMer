@@ -265,6 +265,16 @@ randomGraphER n k = do
                 pure $ Just (src, dest, distance)
               else pure Nothing
 
+writeGraphER :: Int -> Int -> IO ()
+writeGraphER n k = do
+  g <- randomGraphER n k
+  let edges = map show (concat $ V.toList g)
+      header = show (length g) ++ " " ++ show (length edges)
+      output = unlines (header : edges)
+      outfile = "N" ++ show n ++ "k" ++ show k ++ ".graph"
+  writeFile outfile output
+
+
 writeGraph :: Graph -> FilePath -> IO ()
 writeGraph g outfile = do
   let edges = map show (concat $ V.toList g)
