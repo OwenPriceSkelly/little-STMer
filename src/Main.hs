@@ -318,8 +318,8 @@ benchmarkDijkstra' fname = do
   writeFile outfile "nThreads,time\n"
   maxThreads <- getNumCapabilities
   forM_ [1 .. maxThreads] $ \nThreads -> do
-    printf "NTHREADS: %8d \n" nThreads
-    printf "GRAPH: |V|:%d, |E|:%d, mean degree:%4.4f\n" nVertices nEdges meanDeg
+    -- printf "NTHREADS: %8d \n" nThreads
+    -- printf "GRAPH: |V|:%d, |E|:%d, mean degree:%4.4f\n" nVertices nEdges meanDeg
     -- time 5 runs across the first few non-dead-end vertices
     forM_ (take 5 [src | src <- [0 .. nVertices - 1], not (null $ graph ! src)]) $ \src -> do
       -- "parallelized outer" (edge-based queue)
@@ -327,4 +327,5 @@ benchmarkDijkstra' fname = do
       dijkstraIO' graph src nThreads
       t1 <- elapsed_ns <$> getRTSStats
       let elapsed = fromIntegral (t1 - t0) / 10 ^ 9 :: Double
+      -- putStrLn $ "time elapsed: " ++ show elapsed
       appendFile outfile $ show nThreads ++ "," ++ show elapsed ++ "\n"
