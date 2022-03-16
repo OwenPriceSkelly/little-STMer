@@ -5,3 +5,29 @@ stack install --ghc-options="-O2 -threaded -feager-blackholing -rtsopts"
 little-STMer [filename.graph] [0|1] +RTS -s -A32M -N -T
 #+end_src
 second arg is 0 if benchmarking "inner parallel" version, second arg is 1 if benchmarking "outer parallel" version (relaxes edges in batch directly from queue instead of inner, which is per-node)
+
+** PLOTS
+#+begin_src jupyter-julia :session jl :kernel julia :file "./out.svg" :exports both
+using Plots, DataFrames, StatsPlots, CSV
+opt = CSV.read(opt_results, DataFrame)
+
+naive.MFLOPS = naive.DP_OPS ./ (naive.time .* 10^6)
+opt.MFLOPS = opt.DP_OPS ./ (opt.time .* 10^6)
+
+naive.hit_rate = 1.0 .- (naive.L1_DCM ./ naive.LST_INS)
+opt.hit_rate = 1.0 .- (opt.L1_DCM ./ opt.LST_INS)
+naive.MFLOPS = naive.DP_OPS ./ (naive.time .* 10^6)
+opt.MFLOPS = opt.DP_OPS ./ (opt.time .* 10^6)
+
+naive.hit_rate = 1.0 .- (naive.L1_DCM ./ naive.LST_INS)
+opt.hit_rate = 1.0 .- (opt.L1_DCM ./ opt.LST_INS)
+
+@df naive plot(:stride, :MFLOPS
+              , title="MFLOPS as a function of stride"
+              , ylabel="MFLOPS"
+              , xlabel="stride"
+              , xticks=[2^i for i=0:4]
+              , label= "naive"
+              , marker = (4, 1.0, :o)
+              , fmt=:svg)
+#+end_src

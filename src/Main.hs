@@ -87,6 +87,50 @@ dijkstra graph src =
     pop q = Q.deleteFindMin q
     peek q = Q.findMin q
 
+-- | same as vanilla dijkstra above, but within the STM monad.
+-- also just for templating / sanity before rewriting in IO
+dijkstraSTM :: Graph -> Vertex -> STM (Vector (TVar Cost))
+dijkstraSTM graph src = do
+  -- initialize dists to +inf except at i=source vertex, which has dist 0
+  let n = length graph
+  initQueue <- newTVar $ Q.singleton 0 src
+  initDists <- mapM newTVar $ V.replicate n (maxBound :: Cost) // [(src, 0)]
+  loop initQueue initDists
+  where
+    loop ::
+      TVar (Queue Cost Vertex) ->
+      Vector (TVar Cost) ->
+      STM (Vector (TVar Cost))
+    loop queue dists = do
+      q <- readTVar queue
+      if Q.null q
+        then pure dists -- base case: queue is empty, we're done
+        else do
+          visitNext queue dists
+          loop queue dists
+      where
+        visitNext :: TVar (Queue Cost Vertex) -> Vector (TVar Cost) -> STM ()
+        visitNext queue dists = do
+          q <- readTVar queue
+          let ((d, u), q') = pop q
+          writeTVar queue q'
+          d' <- readTVar $ dists ! u
+          when (d < d') $ forM_ (adj u) relax
+          where
+            relax :: Edge -> STM ()
+            relax (Edge u v c) = do
+              old <- readTVar $ dists ! v
+              alt <- readTVar $ dists ! u
+              when (alt + c < old) $ do
+                q <- readTVar queue -- only touches the TVar (Queue) when necessary
+                writeTVar (dists ! v) (alt + c)
+                writeTVar queue (q `Q.union` Q.singleton (alt + c) v)
+
+    adj v = graph V.! v
+    pop q = Q.deleteFindMin q
+    pop_ q = Q.deleteMin q
+    peek q = Q.findMin q
+
 -- | Implementation parallelized at the "outer loop" of the algorithm;
 -- This is done by modifying the algorithm so that instead of a queue containing
 -- vertices we "visit" by relaxing its incident edges, we keep a queue of edges which we
@@ -94,6 +138,9 @@ dijkstra graph src =
 -- The upshot is that we should almost always be able to put every single thread to work, the
 -- downside is that the queue has O(|E|) entries instead of O(|V|), and
 -- duplicate/stale entries are probably more common.
+-- NOTE: results suggest that the trade-off isn't really worth it either for
+-- dense or sparser graphs -- Might be worth trying but with a proper
+-- decrease-key queue?
 dijkstraIO' :: Graph -> Vertex -> Int -> IO (Vector Cost)
 dijkstraIO' graph src nThreads = do
   initQueue <- newTVarIO $ Q.fromList [(0, e) | e <- adj src]
@@ -180,49 +227,6 @@ dijkstraIO graph src = do
     pop_ q = Q.deleteMin q
     peek q = Q.findMin q
 
--- | same as vanilla dijkstra above, but within the STM monad.
--- also just for templating / sanity before rewriting in IO
-dijkstraSTM :: Graph -> Vertex -> STM (Vector (TVar Cost))
-dijkstraSTM graph src = do
-  -- initialize dists to +inf except at i=source vertex, which has dist 0
-  let n = length graph
-  initQueue <- newTVar $ Q.singleton 0 src
-  initDists <- mapM newTVar $ V.replicate n (maxBound :: Cost) // [(src, 0)]
-  loop initQueue initDists
-  where
-    loop ::
-      TVar (Queue Cost Vertex) ->
-      Vector (TVar Cost) ->
-      STM (Vector (TVar Cost))
-    loop queue dists = do
-      q <- readTVar queue
-      if Q.null q
-        then pure dists -- base case: queue is empty, we're done
-        else do
-          visitNext queue dists
-          loop queue dists
-      where
-        visitNext :: TVar (Queue Cost Vertex) -> Vector (TVar Cost) -> STM ()
-        visitNext queue dists = do
-          q <- readTVar queue
-          let ((d, u), q') = pop q
-          writeTVar queue q'
-          d' <- readTVar $ dists ! u
-          when (d < d') $ forM_ (adj u) relax
-          where
-            relax :: Edge -> STM ()
-            relax (Edge u v c) = do
-              old <- readTVar $ dists ! v
-              alt <- readTVar $ dists ! u
-              when (alt + c < old) $ do
-                q <- readTVar queue -- only touches the TVar (Queue) when necessary
-                writeTVar (dists ! v) (alt + c)
-                writeTVar queue (q `Q.union` Q.singleton (alt + c) v)
-
-    adj v = graph V.! v
-    pop q = Q.deleteFindMin q
-    pop_ q = Q.deleteMin q
-    peek q = Q.findMin q
 
 readGraph :: FilePath -> IO Graph
 readGraph infile = do
@@ -289,12 +293,12 @@ main = do
     then benchmarkDijkstra fname
     else benchmarkDijkstra' fname
 
-benchmarkDijkstra fname = do
-  graph <- readGraph fname
+benchmarkDijkstra graphFile = do
+  graph <- readGraph graphFile
   let nVertices = length graph
       nEdges = length $ concat (V.toList graph)
       meanDeg = (fromIntegral nVertices / fromIntegral nEdges) :: Double
-      outfile = fname ++ ".inner_parallel.results"
+      outfile = graphFile ++ ".inner_parallel.results"
   writeFile outfile "nThreads,time\n"
   maxThreads <- getNumCapabilities
   forM_ [1 .. maxThreads] $ \nThreads -> do
@@ -309,12 +313,12 @@ benchmarkDijkstra fname = do
       let elapsed = fromIntegral (t1 - t0) / 10 ^ 9 :: Double
       appendFile outfile $ show nThreads ++ "," ++ show elapsed ++ "\n"
 
-benchmarkDijkstra' fname = do
-  graph <- readGraph fname
+benchmarkDijkstra' graphFile = do
+  graph <- readGraph graphFile
   let nVertices = length graph
       nEdges = length $ concat (V.toList graph)
       meanDeg = (fromIntegral nEdges / fromIntegral nVertices) :: Double
-      outfile = fname ++ ".outer_parallel.results"
+      outfile = graphFile ++ ".outer_parallel.results"
   writeFile outfile "nThreads,time\n"
   maxThreads <- getNumCapabilities
   forM_ [1 .. maxThreads] $ \nThreads -> do
