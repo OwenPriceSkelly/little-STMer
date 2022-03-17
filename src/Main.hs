@@ -301,7 +301,7 @@ benchmarkDijkstra graphFile = do
       outfile = graphFile ++ ".inner_parallel.results"
   writeFile outfile "nThreads,time\n"
   maxThreads <- getNumCapabilities
-  forM_ [1 .. maxThreads] $ \nThreads -> do
+  forM_ (1:[8,16 .. maxThreads]) $ \nThreads -> do
     setNumCapabilities nThreads
     -- printf "NTHREADS: %8d \n" nThreads
     -- printf "GRAPH: |V|:%d, |E|:%d, mean degree:%4.4f\n" nVertices nEdges meanDeg
@@ -321,7 +321,7 @@ benchmarkDijkstra' graphFile = do
       outfile = graphFile ++ ".outer_parallel.results"
   writeFile outfile "nThreads,time\n"
   maxThreads <- getNumCapabilities
-  forM_ [1 .. maxThreads] $ \nThreads -> do
+  forM_ (1:[8,16 .. maxThreads]) $ \nThreads -> do
     -- printf "NTHREADS: %8d \n" nThreads
     -- printf "GRAPH: |V|:%d, |E|:%d, mean degree:%4.4f\n" nVertices nEdges meanDeg
     -- time 5 runs across the first few non-dead-end vertices

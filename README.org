@@ -6,6 +6,7 @@ little-STMer [filename.graph] [0|1] +RTS -s -A32M -N -T
 #+end_src
 second arg is 0 if benchmarking "inner parallel" version, second arg is 1 if benchmarking "outer parallel" version (relaxes edges in batch directly from queue instead of inner, which is per-node)
 
+NOTE: currently running with ~srun -p general --pty /bin/bash~ and tmux
 ** PLOTS
 #+begin_src jupyter-julia :session jl :kernel julia :file "./out.svg" :exports both
 using Plots, DataFrames, StatsPlots, CSV
